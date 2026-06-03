@@ -1,0 +1,10 @@
+Inbound ID,Vendor Name,Email Subject,Sender Address,Received Date,PO Number,Invoice Number,Invoice Date,Total Amount,Confidence,SLA Status,Urgency Status,SAP Match Status,SAP Doc ID,Assigned Owner
+SGA-100,Grainger Industrial Supply,Urgent Parts SGA Invoice - SGA-GR-909212,billing@grainger.com,2026-06-03 10:45 AM,PO-450098124,INV-9021481,2026-06-01,$4520.00,98%,Pending Upload,Same Day,MATCHED,,Unassigned
+SGA-101,Shell Lubricants & Fuels,SGA Fuel Supply Invoice #1029312,peabody-billing@shell.com,2026-06-03 09:12 AM,PO-450098199,SH-1029312,2026-05-30,$18250.00,96%,In Review,Standard,MISMATCH,,Alice Smith
+SGA-102,Office Depot Business Solutions,Peabody Corporate HQ - SGA Office supplies,orders@officedepot.com,2026-06-02 04:30 PM,PO-450097721,OD-881920,2026-05-28,$850.50,99%,Pending Upload,Standard,NO_GR,,Unassigned
+SGA-103,Cummins Engine Service,SGA Emergency Site Repair Invoice #CUM-9921,service@cummins.com,2026-06-02 02:15 PM,PO-450098004,CUM-9921,2026-05-29,$7800.00,94%,Pending Upload,Same Day,MATCHED,,Unassigned
+SGA-099,Office Depot Business Solutions,Peabody HQ Office Supplies May 2026,orders@officedepot.com,2026-05-28 11:30 AM,PO-450097721,OD-881204,2026-05-27,$1240.20,98%,Synced to SAP,Standard,MATCHED,SGA-2026-881204,John Doe
+SGA-098,Grainger Industrial Supply,Operational Tools Order - Site SGA-B,billing@grainger.com,2026-05-27 09:15 AM,PO-450098001,INV-9021004,2026-05-26,$3150.00,99%,Synced to SAP,Standard,MATCHED,SGA-2026-981242,Alice Smith
+SGA-097,Shell Lubricants & Fuels,SGA Fuel Supply May Delivery,peabody-billing@shell.com,2026-05-26 02:30 PM,PO-450098199,SH-1029104,2026-05-25,$17900.00,95%,Synced to SAP,Standard,MATCHED,SGA-2026-452104,John Doe
+SGA-111,Office Depot Business Solutions,Peabody Energy HQ SGA Bill - Delivery OD-889021,orders@officedepot.com,2026-06-03 12:32 PM,PO-450097721,OD-889021,2026-06-03,$145.80,99%,Pending Ingestion,Standard,MATCHED,,Unassigned
+SGA-112,Office Depot Business Solutions,Peabody Energy HQ SGA Bill - Delivery OD-889021,orders@officedepot.com,2026-06-03 12:32 PM,PO-450097721,OD-889021,2026-06-03,$145.80,99%,Pending Ingestion,Standard,MATCHED,,Unassigned
