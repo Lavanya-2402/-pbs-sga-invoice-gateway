@@ -1,0 +1,1655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PBS SGA - Invoice AI-Gateway</title>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS CDN for layout & styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons (CDN) -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            peabody: {
+              navy: '#005A9C',       // Official Peabody corporate blue
+              darkNavy: '#0A2342',   // Corporate dark blue
+              gold: '#F2A900',       // Accent Gold
+              slateBg: '#F8FAFC',    // Slate Light background
+              border: '#E2E8F0',
+            },
+            brand: {
+              dark: '#0A2342',
+              card: '#FFFFFF',
+              accent: '#005A9C',
+              warning: '#D97706',
+              danger: '#DC2626',
+              success: '#059669',
+              border: '#E2E8F0'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #F8FAFC;
+      color: #1E293B;
+      scrollbar-width: thin;
+      scrollbar-color: #CBD5E1 #F8FAFC;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: #F8FAFC;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 3px;
+    }
+    .pulse-urgent {
+      animation: pulse-border-light 2s infinite;
+    }
+    @keyframes pulse-border-light {
+      0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.2); border-color: rgba(220, 38, 38, 0.4); }
+      70% { box-shadow: 0 0 0 8px rgba(220, 38, 38, 0); border-color: rgba(220, 38, 38, 0.2); }
+      100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); border-color: rgba(220, 38, 38, 0.2); }
+    }
+    .premium-shadow {
+      box-shadow: 0 4px 20px -2px rgba(15, 30, 54, 0.06);
+    }
+  </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden font-sans">
+
+  <!-- ==================== LOGIN VIEW ==================== -->
+  <div id="login-view" class="flex-1 flex flex-col items-center justify-center relative bg-gradient-to-br from-[#005A9C] via-[#004e87] to-[#003e6b] p-4">
+    <div class="absolute w-[500px] h-[500px] bg-white/5 rounded-full blur-[100px] top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
+    
+    <div class="w-full max-w-md bg-white p-8 rounded-2xl shadow-2xl relative z-10 flex flex-col gap-6 border border-white/20">
+      <div class="text-center space-y-2">
+        <img src="logo.png" alt="Peabody" class="h-16 w-auto mx-auto select-none mix-blend-multiply">
+        <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">SGA Invoice AI-Gateway Portal</p>
+      </div>
+
+      <!-- User Selection -->
+      <div class="space-y-4">
+        <div class="space-y-2">
+          <label class="text-xs text-slate-500 font-semibold uppercase tracking-wider block">Choose Authorized User</label>
+          <div class="grid grid-cols-1 gap-2.5">
+            <button onclick="selectUserProfile('John Doe', 'SGA Team A')" id="user-btn-john" class="w-full text-left p-3.5 rounded-xl border-2 border-[#005A9C] bg-blue-50/50 text-[#005A9C] hover:bg-blue-50 transition flex items-center gap-3">
+              <div class="h-9 w-9 bg-[#005A9C] rounded-full flex items-center justify-center font-bold text-xs text-white">JD</div>
+              <div>
+                <p class="text-xs font-bold text-slate-800">John Doe</p>
+                <p class="text-[10px] text-gray-500">Senior AP Specialist (SGA Team A)</p>
+              </div>
+              <i data-lucide="check-circle-2" class="w-5 h-5 ml-auto text-[#005A9C]" id="user-check-john"></i>
+            </button>
+
+            <button onclick="selectUserProfile('Alice Smith', 'SGA Team B')" id="user-btn-alice" class="w-full text-left p-3.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300 transition flex items-center gap-3">
+              <div class="h-9 w-9 bg-purple-600 rounded-full flex items-center justify-center font-bold text-xs text-white">AS</div>
+              <div>
+                <p class="text-xs font-bold text-slate-850">Alice Smith</p>
+                <p class="text-[10px] text-gray-500">AP Clerk (SGA Team B)</p>
+              </div>
+              <i data-lucide="check-circle-2" class="w-5 h-5 ml-auto text-slate-300 hidden" id="user-check-alice"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="space-y-1.5 pt-1">
+          <label class="text-xs text-slate-500 font-semibold uppercase tracking-wider block">Peabody Active Directory Code</label>
+          <input type="password" value="••••••••" disabled class="w-full bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-400 font-mono focus:outline-none">
+        </div>
+
+        <button onclick="performLogin()" class="w-full bg-[#005A9C] hover:bg-[#004e87] text-white font-bold py-3 px-4 rounded-xl text-sm transition shadow-lg flex items-center justify-center gap-2 mt-4">
+          <span>Verify & Enter Dashboard</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="text-center pt-2 border-t border-slate-100">
+        <p class="text-[10px] text-gray-400 font-medium">Internal Corporate Use Only. Direct sync linked to Exchange.</p>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ==================== DASHBOARD VIEW ==================== -->
+  <div id="dashboard-view" class="hidden flex-1 flex overflow-hidden bg-slate-50">
+
+    <!-- LEFT SIDEBAR PANEL -->
+    <aside class="w-64 bg-white text-slate-800 flex flex-col shrink-0 h-full border-r border-slate-200 z-20">
+      
+      <!-- Peabody Logo Header -->
+      <div class="p-6 border-b border-slate-100 space-y-1">
+        <img src="logo.png" alt="Peabody" class="h-14 w-auto select-none mix-blend-multiply">
+        <p class="text-[9px] text-[#F2A900] font-bold uppercase tracking-widest">SGA AP AI-Gateway</p>
+      </div>
+
+      <!-- Navigation Tabs (Vertical Sidebar list) -->
+      <div class="flex-1 overflow-y-auto custom-scroll p-4 space-y-1.5" id="vertical-navbar-menu">
+        
+        <!-- 1. Dashboard Tab -->
+        <button onclick="switchView('dashboard')" id="nav-btn-dashboard" class="w-full px-4 py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider transition flex items-center gap-2.5 border-l-4 text-left text-slate-500 hover:text-[#005A9C] hover:bg-slate-50 border-transparent">
+          <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+          <span>Dashboard</span>
+        </button>
+
+        <!-- 2. Active Queue Tab -->
+        <button onclick="switchView('active')" id="nav-btn-active" class="w-full px-4 py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider transition flex items-center gap-2.5 border-l-4 text-left justify-between text-slate-500 hover:text-[#005A9C] hover:bg-slate-50 border-transparent">
+          <div class="flex items-center gap-2.5">
+            <i data-lucide="inbox" class="w-4 h-4"></i>
+            <span>Active Queue</span>
+          </div>
+          <span class="bg-blue-100 text-blue-800 text-[10px] px-2 py-0.5 rounded-full font-mono font-bold" id="total-badge">4</span>
+        </button>
+
+        <!-- 3. My Tasks Tab (Between Active Queue and Completed Ingest) -->
+        <button onclick="switchView('tasks')" id="nav-btn-tasks" class="w-full px-4 py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider transition flex items-center gap-2.5 border-l-4 text-left justify-between text-slate-500 hover:text-[#005A9C] hover:bg-slate-50 border-transparent">
+          <div class="flex items-center gap-2.5">
+            <i data-lucide="user-check" class="w-4 h-4"></i>
+            <span>My Tasks</span>
+          </div>
+          <span class="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-mono font-bold" id="my-tasks-badge">0</span>
+        </button>
+
+        <!-- 4. Completed Ingest (SAP) Tab -->
+        <button onclick="switchView('completed')" id="nav-btn-completed" class="w-full px-4 py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider transition flex items-center gap-2.5 border-l-4 text-left justify-between text-slate-500 hover:text-[#005A9C] hover:bg-slate-50 border-transparent">
+          <div class="flex items-center gap-2.5">
+            <i data-lucide="check-circle" class="w-4 h-4"></i>
+            <span>Completed (SAP)</span>
+          </div>
+          <span class="bg-slate-100 text-slate-600 text-[10px] px-2 py-0.5 rounded-full font-mono font-bold" id="completed-badge">188</span>
+        </button>
+
+        <!-- 5. Validation Flags Tab -->
+        <button onclick="switchView('flags')" id="nav-btn-flags" class="w-full px-4 py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider transition flex items-center gap-2.5 border-l-4 text-left justify-between text-slate-500 hover:text-[#005A9C] hover:bg-slate-50 border-transparent">
+          <div class="flex items-center gap-2.5">
+            <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+            <span>Validation Flags</span>
+          </div>
+          <span class="bg-amber-100 text-amber-800 text-[10px] px-2 py-0.5 rounded-full font-mono font-bold" id="flag-badge">0</span>
+        </button>
+
+        <!-- 6. Audit Trail Tab -->
+        <button onclick="switchView('audit')" id="nav-btn-audit" class="w-full px-4 py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider transition flex items-center gap-2.5 border-l-4 text-left text-slate-500 hover:text-[#005A9C] hover:bg-slate-50 border-transparent">
+          <i data-lucide="shield" class="w-4 h-4"></i>
+          <span>Audit Trail</span>
+        </button>
+
+        <!-- 7. AI Configuration Tab -->
+        <button onclick="switchView('config')" id="nav-btn-config" class="w-full px-4 py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider transition flex items-center gap-2.5 border-l-4 text-left text-slate-500 hover:text-[#005A9C] hover:bg-slate-50 border-transparent">
+          <i data-lucide="settings" class="w-4 h-4"></i>
+          <span>AI Configuration</span>
+        </button>
+      </div>
+
+      <!-- User Profile and Logout Footer inside Sidebar -->
+      <div class="p-4 border-t border-slate-100 bg-white shrink-0">
+        <div class="bg-[#005A9C] text-white p-4 rounded-2xl flex items-center justify-between shadow-md">
+          <div class="flex items-center gap-3 overflow-hidden">
+            <div class="h-9 w-9 rounded-full bg-blue-600 flex items-center justify-center font-bold text-white text-xs border border-slate-200 shadow-sm shrink-0" id="header-user-avatar">
+              JD
+            </div>
+            <div class="text-left overflow-hidden">
+              <p class="text-xs font-bold text-white truncate" id="header-user-name">John Doe</p>
+              <p class="text-[9px] text-blue-200 font-semibold uppercase tracking-wider truncate" id="header-user-role">SGA Team A Specialist</p>
+            </div>
+          </div>
+          <button onclick="performLogout()" class="p-2 hover:bg-white/10 hover:text-white rounded-lg text-blue-200 transition" title="Log Out">
+            <i data-lucide="log-out" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- RIGHT CONTENT CONTAINER -->
+    <div class="flex-1 flex flex-col overflow-hidden" id="main-app-container">
+      <div class="flex flex-1 overflow-hidden" id="workspace-layout">
+      <!-- Dynamic Workspace layout (Queue column and Details view) -->
+    </div>
+  </div>
+
+  <!-- Global Toast -->
+  <div class="fixed bottom-4 right-4 z-50 pointer-events-none" id="toast-container"></div>
+
+  <!-- APPLICATION LOGIC CODE -->
+  <script>
+    let currentUser = null;
+    let currentView = 'active'; 
+    let currentFilter = 'all';  
+    let searchQuery = '';
+
+    // Database Mock (preserves state in-memory)
+    const mockInvoices = [
+      {
+        id: "sga-100",
+        vendor: "Grainger Industrial Supply",
+        subject: "Urgent Parts SGA Invoice - SGA-GR-909212",
+        received: "2026-06-03 10:45 AM",
+        poNumber: "PO-450098124",
+        invoiceNumber: "INV-9021481",
+        invoiceDate: "2026-06-01",
+        amount: "$4,520.00",
+        confidence: "98%",
+        urgent: true,
+        status: "AI Extracted",
+        owner: "Unassigned",
+        grStatus: "MATCHED",
+        grDetails: "Goods Receipt GR-800293 matches perfectly (45 Items - SGA Operational Spares). Ready for SAP Workflow Ingestion.",
+        emailFrom: "billing@grainger.com",
+        emailBody: "Hello Peabody SGA Team,\n\nPlease find attached invoice SGA-GR-909212 for parts supplied against Purchase Order PO-450098124.\nNote that payment terms for this SGA invoice are same-day. Please expedite scanning and posting.\n\nThanks,\nGrainger Accounts Team",
+        filename: "invoice_9021481.pdf",
+        filesize: "245 KB"
+      },
+      {
+        id: "sga-101",
+        vendor: "Shell Lubricants & Fuels",
+        subject: "SGA Fuel Supply Invoice #1029312",
+        received: "2026-06-03 09:12 AM",
+        poNumber: "PO-450098199",
+        invoiceNumber: "SH-1029312",
+        invoiceDate: "2026-05-30",
+        amount: "$18,250.00",
+        confidence: "96%",
+        urgent: false,
+        status: "AI Extracted",
+        owner: "Alice Smith", 
+        grStatus: "MISMATCH",
+        grDetails: "Warning: Total invoice amount ($18,250.00) differs from SAP Goods Receipt GR-800299 ($17,900.00) by $350.00. Confirm alignment before SAP post.",
+        emailFrom: "peabody-billing@shell.com",
+        emailBody: "Dear SGA Accounts Payable,\n\nPlease review attached invoice #1029312 for lubricant fuel shipments to operational sites.\nLet us know if there are any discrepancies.\n\nBest regards,\nShell Sales Finance",
+        filename: "shell_sga_1029312.pdf",
+        filesize: "412 KB"
+      },
+      {
+        id: "sga-102",
+        vendor: "Office Depot Business Solutions",
+        subject: "Peabody Corporate HQ - SGA Office supplies",
+        received: "2026-06-02 04:30 PM",
+        poNumber: "PO-450097721",
+        invoiceNumber: "OD-881920",
+        invoiceDate: "2026-05-28",
+        amount: "$850.50",
+        confidence: "99%",
+        urgent: false,
+        status: "AI Extracted",
+        owner: "Unassigned",
+        grStatus: "NO_GR",
+        grDetails: "Alert: No Goods Receipt (GR) document found in SAP for PO-450097721. Confirm delivery of items at HQ before approving for SAP upload.",
+        emailFrom: "orders@officedepot.com",
+        emailBody: "Hi SGA AP Team,\n\nYour recent office supply order has been delivered and billed. Find invoice OD-881920 attached.\n\nThank you for choosing Office Depot!",
+        filename: "office_depot_881920.pdf",
+        filesize: "115 KB"
+      },
+      {
+        id: "sga-103",
+        vendor: "Cummins Engine Service",
+        subject: "SGA Emergency Site Repair Invoice #CUM-9921",
+        received: "2026-06-02 02:15 PM",
+        poNumber: "PO-450098004",
+        invoiceNumber: "CUM-9921",
+        invoiceDate: "2026-05-29",
+        amount: "$7,800.00",
+        confidence: "94%",
+        urgent: true,
+        status: "AI Extracted",
+        owner: "Unassigned",
+        grStatus: "MATCHED",
+        grDetails: "Goods Receipt GR-800104 matched. Emergency repair labor hours verified and approved by site manager.",
+        emailFrom: "service@cummins.com",
+        emailBody: "Emergency call out repair invoice CUM-9921 is attached for service on generator unit SGA-04. Same day payment was requested per agreement.\n\nRegards,\nCummins Services",
+        filename: "cummins_invoice_cum9921.pdf",
+        filesize: "318 KB"
+      },
+      // Completed items
+      {
+        id: "sga-099",
+        vendor: "Office Depot Business Solutions",
+        subject: "Peabody HQ Office Supplies May 2026",
+        received: "2026-05-28 11:30 AM",
+        poNumber: "PO-450097721",
+        invoiceNumber: "OD-881204",
+        invoiceDate: "2026-05-27",
+        amount: "$1,240.20",
+        confidence: "98%",
+        urgent: false,
+        status: "Synced to SAP",
+        owner: "John Doe",
+        grStatus: "MATCHED",
+        grDetails: "Goods Receipt GR-800100 matched perfectly. Uploaded.",
+        emailFrom: "orders@officedepot.com",
+        emailBody: "Completed delivery billing.",
+        filename: "office_depot_881204.pdf",
+        filesize: "110 KB",
+        sapDocId: "SGA-2026-881204"
+      },
+      {
+        id: "sga-098",
+        vendor: "Grainger Industrial Supply",
+        subject: "Operational Tools Order - Site SGA-B",
+        received: "2026-05-27 09:15 AM",
+        poNumber: "PO-450098001",
+        invoiceNumber: "INV-9021004",
+        invoiceDate: "2026-05-26",
+        amount: "$3,150.00",
+        confidence: "99%",
+        urgent: false,
+        status: "Synced to SAP",
+        owner: "Alice Smith",
+        grStatus: "MATCHED",
+        grDetails: "Matched.",
+        emailFrom: "billing@grainger.com",
+        emailBody: "Supplies invoice.",
+        filename: "grainger_9021004.pdf",
+        filesize: "205 KB",
+        sapDocId: "SGA-2026-981242"
+      },
+      {
+        id: "sga-097",
+        vendor: "Shell Lubricants & Fuels",
+        subject: "SGA Fuel Supply May Delivery",
+        received: "2026-05-26 02:30 PM",
+        poNumber: "PO-450098199",
+        invoiceNumber: "SH-1029104",
+        invoiceDate: "2026-05-25",
+        amount: "$17,900.00",
+        confidence: "95%",
+        urgent: false,
+        status: "Synced to SAP",
+        owner: "John Doe",
+        grStatus: "MATCHED",
+        grDetails: "Matched.",
+        emailFrom: "peabody-billing@shell.com",
+        emailBody: "Bulk fuel billing.",
+        filename: "shell_invoice_1029104.pdf",
+        filesize: "390 KB",
+        sapDocId: "SGA-2026-452104"
+      }
+    ];
+
+    // Audit logs records
+    const mockLogs = [
+      { timestamp: "2026-06-03 11:28:51 AM", event: "User Logged In", actor: "John Doe", details: "Access granted to Staging Portal." },
+      { timestamp: "2026-06-03 10:45:02 AM", event: "Email Ingested", actor: "System (AI)", details: "Ingested email from billing@grainger.com with invoice SGA-GR-909212." },
+      { timestamp: "2026-06-03 09:12:10 AM", event: "Email Ingested", actor: "System (AI)", details: "Ingested email from peabody-billing@shell.com. Assigned to Alice Smith." },
+      { timestamp: "2026-06-02 04:30:15 PM", event: "Email Ingested", actor: "System (AI)", details: "Ingested email from orders@officedepot.com. Missing Goods Receipt alert." },
+      { timestamp: "2026-05-28 11:45:30 AM", event: "SAP Ingestion Sync", actor: "John Doe", details: "Approved Office Depot invoice OD-881204. SAP Doc ID SGA-2026-881204 created." },
+      { timestamp: "2026-05-27 09:30:12 AM", event: "SAP Ingestion Sync", actor: "Alice Smith", details: "Approved Grainger invoice INV-9021004. SAP Doc ID SGA-2026-981242 created." }
+    ];
+
+    // AI Config initial state
+    let aiConfig = {
+      confidenceThreshold: 90,
+      urgentKeywords: ["same day", "immediate", "due on receipt", "urgent"],
+      syncInterval: 15,
+      archiveFolder: "AI_Processed"
+    };
+
+    let selectedLoginUser = "John Doe";
+    let selectedLoginRole = "SGA Team A";
+
+    function toggleMailAPIOverlay() {
+      const overlay = document.getElementById('mail-api-overlay');
+      if (overlay) {
+        overlay.classList.toggle('hidden');
+      }
+    }
+
+    window.addEventListener('click', function(e) {
+      const overlay = document.getElementById('mail-api-overlay');
+      if (overlay && !overlay.classList.contains('hidden')) {
+        const button = overlay.previousElementSibling;
+        if (!overlay.contains(e.target) && !button.contains(e.target)) {
+          overlay.classList.add('hidden');
+        }
+      }
+    });
+
+    // 1. LOGIN CONTROLS
+    function selectUserProfile(name, role) {
+      selectedLoginUser = name;
+      selectedLoginRole = role;
+      
+      const johnBtn = document.getElementById('user-btn-john');
+      const aliceBtn = document.getElementById('user-btn-alice');
+      const johnChk = document.getElementById('user-check-john');
+      const aliceChk = document.getElementById('user-check-alice');
+
+      if (name === "John Doe") {
+        johnBtn.className = "w-full text-left p-3.5 rounded-xl border-2 border-[#005A9C] bg-blue-50/50 text-[#0A2342] hover:bg-blue-50 transition flex items-center gap-3";
+        aliceBtn.className = "w-full text-left p-3.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300 transition flex items-center gap-3";
+        johnChk.classList.remove('hidden');
+        aliceChk.classList.add('hidden');
+      } else {
+        johnBtn.className = "w-full text-left p-3.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300 transition flex items-center gap-3";
+        aliceBtn.className = "w-full text-left p-3.5 rounded-xl border-2 border-purple-600 bg-purple-50/50 text-[#0A2342] hover:bg-purple-50 transition flex items-center gap-3";
+        johnChk.classList.add('hidden');
+        aliceChk.classList.remove('hidden');
+      }
+    }
+
+    function performLogin() {
+      currentUser = {
+        name: selectedLoginUser,
+        role: selectedLoginRole,
+        initials: selectedLoginUser === "John Doe" ? "JD" : "AS"
+      };
+
+      document.getElementById('login-view').classList.add('hidden');
+      document.getElementById('dashboard-view').classList.remove('hidden');
+
+      document.getElementById('header-user-name').innerText = currentUser.name;
+      document.getElementById('header-user-role').innerText = currentUser.role + " Specialist";
+      document.getElementById('header-user-avatar').innerText = currentUser.initials;
+      
+      if (currentUser.initials === "JD") {
+        document.getElementById('header-user-avatar').className = "h-9 w-9 rounded-full bg-blue-600 flex items-center justify-center font-bold text-white text-xs border border-slate-200 shadow-sm";
+      } else {
+        document.getElementById('header-user-avatar').className = "h-9 w-9 rounded-full bg-purple-600 flex items-center justify-center font-bold text-white text-xs border border-slate-200 shadow-sm";
+      }
+
+      mockLogs.unshift({
+        timestamp: new Date().toLocaleString(),
+        event: "User Logged In",
+        actor: currentUser.name,
+        details: "Access granted to Staging Portal."
+      });
+
+      showToast(`Welcome back, ${currentUser.name}`, "success");
+      switchView('dashboard');
+    }
+
+    function performLogout() {
+      mockLogs.unshift({
+        timestamp: new Date().toLocaleString(),
+        event: "User Logged Out",
+        actor: currentUser.name,
+        details: "User logged out of active session."
+      });
+
+      currentUser = null;
+      document.getElementById('dashboard-view').classList.add('hidden');
+      document.getElementById('login-view').classList.remove('hidden');
+      showToast("Signed out of session", "info");
+    }
+
+    // 2. VIEW SWITCHER ENGINE
+    function switchView(viewName) {
+      currentView = viewName;
+      
+      const navButtons = ['dashboard', 'active', 'tasks', 'completed', 'flags', 'audit', 'config'];
+      navButtons.forEach(btn => {
+        const el = document.getElementById(`nav-btn-${btn}`);
+        if (el) {
+          if (btn === viewName) {
+            el.classList.add('bg-blue-50/80', 'text-[#005A9C]', 'border-l-[#F2A900]');
+            el.classList.remove('text-slate-500', 'hover:text-[#005A9C]', 'hover:bg-slate-50', 'border-transparent');
+          } else {
+            el.classList.remove('bg-blue-50/80', 'text-[#005A9C]', 'border-l-[#F2A900]');
+            el.classList.add('text-slate-500', 'hover:text-[#005A9C]', 'hover:bg-slate-50', 'border-transparent');
+          }
+        }
+      });
+
+      const workspace = document.getElementById('workspace-layout');
+      searchQuery = '';
+
+      if (viewName === 'dashboard') {
+        // Calculate dynamic dashboard stats
+        const activeCount = mockInvoices.filter(i => i.status !== "Synced to SAP").length;
+        const myTasksCount = mockInvoices.filter(i => i.status !== "Synced to SAP" && i.owner === currentUser.name).length;
+        const completedCount = 185 + mockInvoices.filter(i => i.status === "Synced to SAP").length;
+        const flagsCount = mockInvoices.filter(inv => inv.status !== "Synced to SAP" && (inv.grStatus === 'MISMATCH' || inv.grStatus === 'NO_GR')).length;
+        
+        workspace.innerHTML = `
+          <main class="flex-1 bg-gradient-to-br from-[#005A9C] to-[#004e87] p-6 overflow-y-auto custom-scroll space-y-6">
+            <div>
+              <h2 class="text-2xl font-black text-white">AP AI-Gateway Dashboard</h2>
+              <p class="text-xs text-blue-100 mt-1">AP Operations overview and mailbox telemetry dashboard.</p>
+            </div>
+            
+            <!-- Statistics Metrics Cards Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              
+              <!-- Card 1: Active Inbound -->
+              <div class="bg-white p-5 rounded-xl border border-slate-200 border-l-4 border-l-blue-600 premium-shadow flex items-center justify-between">
+                <div class="space-y-1">
+                  <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Active Inbound Queue</span>
+                  <p class="text-3xl font-black text-slate-900">${activeCount}</p>
+                </div>
+                <div class="h-10 w-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
+                  <i data-lucide="inbox" class="w-5 h-5"></i>
+                </div>
+              </div>
+
+              <!-- Card 2: My Claimed Tasks -->
+              <div class="bg-white p-5 rounded-xl border border-slate-200 border-l-4 border-l-emerald-500 premium-shadow flex items-center justify-between">
+                <div class="space-y-1">
+                  <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">My Claimed Tasks</span>
+                  <p class="text-3xl font-black text-slate-900">${myTasksCount}</p>
+                </div>
+                <div class="h-10 w-10 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center">
+                  <i data-lucide="user-check" class="w-5 h-5"></i>
+                </div>
+              </div>
+
+              <!-- Card 3: Ingested to SAP -->
+              <div class="bg-white p-5 rounded-xl border border-slate-200 border-l-4 border-l-slate-400 premium-shadow flex items-center justify-between">
+                <div class="space-y-1">
+                  <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Total Synced (SAP)</span>
+                  <p class="text-3xl font-black text-slate-900">${completedCount}</p>
+                </div>
+                <div class="h-10 w-10 bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center">
+                  <i data-lucide="check-circle" class="w-5 h-5"></i>
+                </div>
+              </div>
+
+              <!-- Card 4: Validation Flags -->
+              <div class="bg-white p-5 rounded-xl border border-slate-200 border-l-4 border-l-amber-500 premium-shadow flex items-center justify-between">
+                <div class="space-y-1">
+                  <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Exceptions / Mismatches</span>
+                  <p class="text-3xl font-black text-slate-900">${flagsCount}</p>
+                </div>
+                <div class="h-10 w-10 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center">
+                  <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                </div>
+              </div>
+              
+            </div>
+
+            <!-- Detailed Telemetry Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              
+              <!-- Column 1 & 2: Recent Activity Audit Logs -->
+              <div class="bg-white p-5 rounded-xl border border-slate-200 premium-shadow space-y-4 lg:col-span-2">
+                <h3 class="text-xs font-bold text-slate-700 uppercase tracking-widest flex items-center gap-2">
+                  <i data-lucide="activity" class="w-4 h-4 text-blue-600"></i>
+                  <span>Recent AP Activity Logs</span>
+                </h3>
+                <div class="divide-y divide-slate-100 max-h-80 overflow-y-auto custom-scroll pr-2 text-xs">
+                  ${mockLogs.slice(0, 5).map(log => `
+                    <div class="py-2.5 flex items-start justify-between gap-4 font-sans">
+                      <div>
+                        <p class="font-bold text-slate-800">${log.event} - <span class="text-slate-500 font-medium">${log.details}</span></p>
+                        <p class="text-[10px] text-slate-400 mt-0.5 font-mono">${log.timestamp} • Actor: ${log.actor}</p>
+                      </div>
+                      <span class="text-[10px] bg-slate-50 border border-slate-200 text-[#0A2342] font-semibold px-2 py-0.5 rounded uppercase font-mono tracking-wider shrink-0">${log.event.split(' ')[0]}</span>
+                    </div>
+                  `).join('')}
+                </div>
+                <div class="pt-2 text-center border-t border-slate-100">
+                  <button onclick="switchView('audit')" class="text-blue-600 hover:text-blue-800 text-xs font-bold transition flex items-center gap-1.5 mx-auto">
+                    <span>View Complete Audit Trail</span>
+                    <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Column 3: Graph API Connectivity Status Details -->
+              <div class="bg-white p-5 rounded-xl border border-slate-200 premium-shadow space-y-4">
+                <h3 class="text-xs font-bold text-slate-700 uppercase tracking-widest flex items-center gap-2">
+                  <i data-lucide="mail" class="w-4 h-4 text-blue-600"></i>
+                  <span>MS Graph Mail API Telemetry</span>
+                </h3>
+                
+                <div class="bg-[#F8FAFC] border border-slate-200 rounded-xl p-4 space-y-3 text-xs">
+                  <div class="flex items-center gap-2">
+                    <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span class="font-bold text-emerald-700">CONNECTED</span>
+                  </div>
+                  <div class="space-y-2 text-slate-600 font-mono text-[10px]">
+                    <div class="flex justify-between border-b border-slate-100 pb-1"><span>Target mailbox:</span><span class="text-slate-800 font-bold font-sans">PBS_SGA@peabody...</span></div>
+                    <div class="flex justify-between border-b border-slate-100 pb-1"><span>Graph API sweep:</span><span class="text-emerald-600 font-bold font-sans">v1.0 webhook push</span></div>
+                    <div class="flex justify-between border-b border-slate-100 pb-1"><span>Auth Token type:</span><span class="text-slate-700">Azure AD OAuth2</span></div>
+                    <div class="flex justify-between border-b border-slate-100 pb-1"><span>Last sync swept:</span><span class="text-slate-800 font-bold font-sans">4.1s ago</span></div>
+                    <div class="flex justify-between"><span>OCR Engine status:</span><span class="text-emerald-600 font-bold font-sans">Online (100%)</span></div>
+                  </div>
+                </div>
+                
+                <div class="text-[11px] text-slate-400 italic text-center leading-relaxed">
+                  Real-time webhook sweeps emails from Outlook mailbox, parses invoice attachments, and synchronizes automatically.
+                </div>
+              </div>
+              
+            </div>
+          </main>
+        `;
+      }
+      else if (viewName === 'active' || viewName === 'tasks' || viewName === 'flags') {
+        workspace.innerHTML = `
+          <!-- Queue List Container -->
+          <div id="queue-list-container" class="flex-1 bg-gradient-to-br from-[#005A9C] to-[#004e87] p-6 overflow-y-auto custom-scroll space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h2 class="text-2xl font-black text-white" id="queue-title-label">Active Extraction Queue</h2>
+                <p class="text-xs text-blue-100 mt-1" id="queue-subtitle-label">Inbound invoice emails received by the AI-Gateway.</p>
+              </div>
+              <div class="flex items-center gap-3 self-end sm:self-auto">
+                <div class="relative w-64">
+                  <input type="text" id="search-input" onkeyup="filterQueueBySearch()" placeholder="Search PO#, Invoice#, Vendor..." class="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 shadow-sm transition">
+                  <i data-lucide="search" class="absolute left-3 top-2.5 w-4 h-4 text-slate-400"></i>
+                </div>
+                <div class="flex gap-1.5" id="queue-filters-wrapper">
+                  <button onclick="setQueueFilter('all')" id="filter-btn-all" class="px-3.5 py-1.5 rounded-lg bg-white text-[#005A9C] border border-white text-xs font-bold uppercase transition shadow-sm">All Mail</button>
+                  <button onclick="setQueueFilter('urgent')" id="filter-btn-urgent" class="px-3.5 py-1.5 rounded-lg bg-transparent text-white border border-white/20 hover:bg-white/10 text-xs font-bold uppercase transition flex items-center gap-1 shadow-sm"><span class="h-1.5 w-1.5 bg-red-500 rounded-full"></span> Urgent</button>
+                </div>
+              </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="inbox-list"></div>
+          </div>
+
+          <!-- Queue Details Container -->
+          <div id="queue-details-container" class="hidden flex-1 bg-gradient-to-br from-[#005A9C] to-[#004e87] p-6 overflow-y-auto custom-scroll space-y-6">
+            <!-- Header section with back button -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-white/15 pb-4 gap-4">
+              <div class="flex items-center gap-4">
+                <button onclick="goBackToQueueList()" class="px-4 py-2 bg-white hover:bg-slate-100 text-[#005A9C] hover:text-[#004e87] border border-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-sm shrink-0">
+                  <i data-lucide="arrow-left" class="w-4 h-4 text-[#005A9C]"></i>
+                  <span>Back to List</span>
+                </button>
+                <div>
+                  <h2 class="text-xl font-black text-white" id="selected-vendor">Vendor</h2>
+                  <p class="text-xs text-blue-200 font-bold mt-1">Subject: <span class="font-bold text-white font-sans opacity-90" id="selected-subject">Subject</span></p>
+                </div>
+              </div>
+              <div class="flex items-center gap-4 self-start md:self-auto">
+                <div class="text-left md:text-right">
+                  <span class="text-[10px] text-blue-200 font-extrabold uppercase tracking-wider block">Received Date</span>
+                  <p class="text-xs font-bold text-white font-mono mt-0.5" id="selected-received">-</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Details Content -->
+            <!-- Urgent terms banner -->
+            <div id="urgent-banner" class="hidden bg-gradient-to-r from-red-50 to-transparent border border-red-200 rounded-xl px-5 py-3.5 flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="h-2.5 w-2.5 bg-red-500 rounded-full animate-ping"></span>
+                <span class="text-xs font-bold text-red-600 uppercase tracking-wider">⚡ Same Day Payment Terms Required</span>
+              </div>
+            </div>
+
+            <!-- Lock Control Banner Card -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 flex items-center justify-between transition-all duration-300 shadow-inner" id="lock-banner"></div>
+
+            <!-- AI Extracted Details -->
+            <div class="bg-[#F0F7FF] p-6 rounded-2xl border border-[#C2E0FF] border-l-4 border-l-[#F2A900] premium-shadow space-y-4">
+              <div class="flex items-center justify-between">
+                <h3 class="text-xs font-bold text-[#005A9C] uppercase tracking-widest flex items-center gap-2">
+                  <i data-lucide="sparkles" class="w-4 h-4 text-[#F2A900]"></i>
+                  <span>AI Extracted Details</span>
+                </h3>
+                <span class="text-2xs text-[#005A9C] font-bold font-mono">Avg Accuracy: <strong class="text-emerald-600 font-bold" id="selected-confidence">98%</strong></span>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="ai-fields-container"></div>
+            </div>
+
+            <!-- SAP Matching Panel -->
+            <div class="bg-[#F8FAFC] p-6 rounded-2xl border border-slate-200 border-l-4 border-l-[#005A9C] premium-shadow space-y-4">
+              <h3 class="text-xs font-bold text-[#005A9C] uppercase tracking-widest flex items-center gap-2">
+                <i data-lucide="database" class="w-4 h-4 text-[#005A9C]"></i>
+                <span>SAP Goods Receipt Matching</span>
+              </h3>
+              <div class="p-4 rounded-xl border space-y-3 transition-all duration-300" id="validation-panel"></div>
+            </div>
+
+            <!-- Attachment & original inbound email -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- Attachment -->
+              <div class="space-y-3">
+                <h3 class="text-xs font-bold text-[#005A9C] uppercase tracking-widest flex items-center gap-1.5">
+                  <i data-lucide="paperclip" class="w-3.5 h-3.5 text-[#005A9C]"></i> 
+                  <span>Attached Invoice Document</span>
+                </h3>
+                <div class="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-200 hover:bg-slate-100/50 cursor-pointer transition">
+                  <div class="flex items-center gap-3">
+                    <i data-lucide="file-text" class="w-9 h-9 text-red-500"></i>
+                    <div class="text-left">
+                      <p class="text-xs font-bold text-slate-900 font-mono max-w-[170px] truncate" id="selected-filename">-</p>
+                      <p class="text-[10px] text-slate-500 font-mono" id="selected-filesize">-</p>
+                    </div>
+                  </div>
+                  <i data-lucide="download" class="w-4 h-4 text-slate-400 hover:text-slate-800"></i>
+                </div>
+              </div>
+
+              <!-- Email -->
+              <div class="space-y-3">
+                <h3 class="text-xs font-bold text-[#005A9C] uppercase tracking-widest flex items-center gap-1.5">
+                  <i data-lucide="mail" class="w-3.5 h-3.5 text-[#005A9C]"></i> 
+                  <span>Original Inbound Email</span>
+                </h3>
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2 h-40 overflow-y-auto font-mono text-slate-900 text-[11px] custom-scroll">
+                  <p class="border-b border-slate-200 pb-1 text-[#005A9C] font-semibold">From: <span class="text-slate-900 font-bold" id="email-from"></span></p>
+                  <div class="pt-2 text-slate-900 whitespace-pre-line leading-relaxed text-[10px]" id="email-body"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer (SAP Sync Action Panel) -->
+            <div class="border-t border-slate-200 pt-6 flex flex-col gap-4">
+              <div id="processing-loader" class="hidden bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-sm">
+                <div class="flex items-center gap-2">
+                  <svg class="animate-spin h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                  <span class="text-xs font-bold text-slate-900">Syncing SAP...</span>
+                </div>
+                <div class="space-y-1.5 font-mono text-[9px] text-slate-500">
+                  <div class="flex items-center justify-between"><span>1. Ownership Verification</span><span class="text-[#0A2342] font-bold" id="chk-status-1">PENDING</span></div>
+                  <div class="flex items-center justify-between"><span>2. SAP GR Validation</span><span class="text-[#0A2342] font-bold" id="chk-status-2">PENDING</span></div>
+                  <div class="flex items-center justify-between"><span>3. Enterprise Scan Sync</span><span class="text-[#0A2342] font-bold" id="chk-status-3">PENDING</span></div>
+                </div>
+              </div>
+              
+              <div id="btn-group-wrapper" class="flex flex-col sm:flex-row gap-3">
+                <!-- Injected action buttons -->
+              </div>
+            </div>
+          </div>
+        `;
+
+        if (viewName === 'flags') {
+          document.getElementById('queue-title-label').innerText = 'Verification Exceptions';
+          document.getElementById('queue-subtitle-label').innerText = 'Mails flagged with SAP matching discrepancies or missing Goods Receipts.';
+          document.getElementById('filter-btn-all').style.display = 'none';
+          document.getElementById('filter-btn-urgent').style.display = 'none';
+        } else if (viewName === 'tasks') {
+          document.getElementById('queue-title-label').innerText = 'My Claimed Tasks';
+          document.getElementById('queue-subtitle-label').innerText = 'Inbound invoice emails claimed and locked by you for manual review.';
+          document.getElementById('filter-btn-all').style.display = 'none';
+          document.getElementById('filter-btn-urgent').style.display = 'none';
+        } else {
+          document.getElementById('queue-title-label').innerText = 'Active Extraction Queue';
+          document.getElementById('queue-subtitle-label').innerText = 'Inbound invoice emails received by the AI-Gateway.';
+          document.getElementById('filter-btn-all').style.display = 'inline-block';
+          document.getElementById('filter-btn-urgent').style.display = 'inline-block';
+          setQueueFilter(currentFilter);
+        }
+
+        selectedInvoiceId = null;
+        renderQueue();
+      } 
+      else if (viewName === 'completed') {
+        workspace.innerHTML = `
+          <main class="flex-1 bg-gradient-to-br from-[#005A9C] to-[#004e87] p-6 overflow-y-auto custom-scroll space-y-6">
+            <div>
+              <h2 class="text-xl font-bold text-white">SAP Ingestion Database</h2>
+              <p class="text-xs text-blue-100">Total historical records successfully uploaded to SAP Enterprise Scan: <strong class="text-emerald-400 font-mono">188 rows</strong></p>
+            </div>
+            
+            <div class="bg-white rounded-xl overflow-hidden border border-slate-200 premium-shadow">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr class="bg-slate-50 border-b border-slate-200 text-[#005A9C] text-[10px] uppercase font-bold tracking-wider">
+                    <th class="p-4">SAP Doc ID</th>
+                    <th class="p-4">Vendor</th>
+                    <th class="p-4">Invoice Number</th>
+                    <th class="p-4">PO Number</th>
+                    <th class="p-4">Amount (USD)</th>
+                    <th class="p-4">Upload Date</th>
+                    <th class="p-4">Processed By</th>
+                    <th class="p-4 text-center">Status</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-slate-700 font-mono" id="completed-table-body"></tbody>
+              </table>
+            </div>
+            <div class="text-[11px] text-blue-200/80 italic text-center">Showing latest database entries. 185 historical entries archived in database.</div>
+          </main>
+        `;
+        renderCompletedTable();
+      } 
+      else if (viewName === 'audit') {
+        workspace.innerHTML = `
+          <main class="flex-1 bg-gradient-to-br from-[#005A9C] to-[#004e87] p-6 overflow-y-auto custom-scroll space-y-6">
+            <div>
+              <h2 class="text-xl font-bold text-white">Activity Audit Trail</h2>
+              <p class="text-xs text-blue-100">Chronological governance log tracking shared mailbox activities and SAP integrations.</p>
+            </div>
+            
+            <div class="bg-white rounded-xl overflow-hidden border border-slate-200 premium-shadow">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr class="bg-slate-50 border-b border-slate-200 text-[#005A9C] text-[10px] uppercase font-bold tracking-wider">
+                    <th class="p-4">Timestamp</th>
+                    <th class="p-4">Event Type</th>
+                    <th class="p-4">Triggered By</th>
+                    <th class="p-4">Action Details Log</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-slate-700 font-mono" id="audit-table-body"></tbody>
+              </table>
+            </div>
+          </main>
+        `;
+        renderAuditTable();
+      } 
+      else if (viewName === 'config') {
+        workspace.innerHTML = `
+          <main class="flex-1 bg-gradient-to-br from-[#005A9C] to-[#004e87] p-6 overflow-y-auto custom-scroll space-y-6">
+            <div class="max-w-4xl mx-auto space-y-6">
+              <div>
+                <h2 class="text-xl font-bold text-white">AI Extraction Configuration</h2>
+                <p class="text-xs text-blue-100">Fine-tune extraction algorithms, confidence scores, and business priority triggers.</p>
+              </div>
+              
+              <div class="bg-white p-6 rounded-xl border border-slate-200 premium-shadow space-y-6 text-xs text-slate-600">
+                <div class="space-y-2">
+                  <div class="flex justify-between font-semibold">
+                    <label>Confidence Threshold Percentage</label>
+                    <span class="text-blue-600 font-bold" id="conf-val">${aiConfig.confidenceThreshold}%</span>
+                  </div>
+                  <p class="text-[11px] text-slate-400">Invoices containing extracted fields with confidence values below this will flag warning states in the UI.</p>
+                  <input type="range" min="70" max="98" value="${aiConfig.confidenceThreshold}" id="conf-slider" oninput="updateConfigSlider()" class="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                </div>
+   
+                <hr class="border-slate-200">
+   
+                <div class="space-y-2">
+                  <label class="font-semibold block text-slate-700">Same-Day Priority Terms (Keywords)</label>
+                  <p class="text-[11px] text-slate-400">Emails or PDFs matching these terms trigger high-priority alerts.</p>
+                  <input type="text" value="${aiConfig.urgentKeywords.join(', ')}" id="config-keywords" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-slate-800 font-mono">
+                </div>
+   
+                <hr class="border-slate-200">
+   
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div class="space-y-2">
+                    <label class="font-semibold block text-slate-700">SAP Database Sync Frequency</label>
+                    <select id="config-sync" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-slate-800">
+                      <option value="5" ${aiConfig.syncInterval == 5 ? 'selected' : ''}>Every 5 Minutes</option>
+                      <option value="15" ${aiConfig.syncInterval == 15 ? 'selected' : ''}>Every 15 Minutes</option>
+                      <option value="60" ${aiConfig.syncInterval == 60 ? 'selected' : ''}>Hourly Check</option>
+                    </select>
+                  </div>
+                  
+                  <div class="space-y-2">
+                    <label class="font-semibold block text-slate-700">Outlook Auto-Archive Destination Folder</label>
+                    <input type="text" value="${aiConfig.archiveFolder}" id="config-archive" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-slate-800 font-mono">
+                  </div>
+                </div>
+   
+                <hr class="border-slate-200">
+   
+                <div class="flex justify-end gap-2 pt-2">
+                  <button onclick="saveAIConfig()" class="bg-[#005A9C] hover:bg-[#004e87] text-white font-bold py-2 px-6 rounded-lg transition shadow-md">Save Changes</button>
+                </div>
+              </div>
+            </div>
+          </main>
+        `;
+      }
+
+      // Update counters dynamically
+      const completedBadge = document.getElementById('completed-badge');
+      const totalBadge = document.getElementById('total-badge');
+      const myTasksBadge = document.getElementById('my-tasks-badge');
+      const flagBadge = document.getElementById('flag-badge');
+      
+      const activeCount = mockInvoices.filter(i => i.status !== "Synced to SAP").length;
+      const myTasksCount = mockInvoices.filter(i => i.status !== "Synced to SAP" && i.owner === currentUser.name).length;
+      const compCount = mockInvoices.filter(i => i.status === "Synced to SAP").length;
+      const flagsCount = mockInvoices.filter(inv => inv.status !== "Synced to SAP" && (inv.grStatus === 'MISMATCH' || inv.grStatus === 'NO_GR')).length;
+      
+      if (completedBadge) completedBadge.innerText = 185 + compCount;
+      if (totalBadge) totalBadge.innerText = activeCount;
+      if (myTasksBadge) myTasksBadge.innerText = myTasksCount;
+      if (flagBadge) flagBadge.innerText = flagsCount;
+
+      lucide.createIcons();
+    }
+
+    // 3. QUEUE FILTERING ENGINE
+    function getQueueList() {
+      let list = [];
+      if (currentView === 'active') {
+        list = mockInvoices.filter(inv => inv.status !== "Synced to SAP");
+      } else if (currentView === 'tasks') {
+        list = mockInvoices.filter(inv => inv.status !== "Synced to SAP" && inv.owner === currentUser.name);
+      } else if (currentView === 'flags') {
+        list = mockInvoices.filter(inv => inv.status !== "Synced to SAP" && (inv.grStatus === 'MISMATCH' || inv.grStatus === 'NO_GR'));
+      }
+
+      if (searchQuery.trim() !== '') {
+        const query = searchQuery.toLowerCase();
+        list = list.filter(inv => 
+          inv.vendor.toLowerCase().includes(query) ||
+          inv.poNumber.toLowerCase().includes(query) ||
+          inv.invoiceNumber.toLowerCase().includes(query) ||
+          inv.subject.toLowerCase().includes(query)
+        );
+      }
+
+      if ((currentView === 'active' || currentView === 'tasks') && currentFilter === 'urgent') {
+        list = list.filter(inv => inv.urgent);
+      }
+
+      return list;
+    }
+
+    function renderQueue() {
+      const listContainer = document.getElementById('inbox-list');
+      if (!listContainer) return;
+      listContainer.innerHTML = '';
+      
+      const list = getQueueList();
+
+      const statsActive = document.getElementById('stats-active-count');
+      if (statsActive) {
+        statsActive.innerText = `${mockInvoices.filter(i => i.status !== "Synced to SAP").length} Inbound`;
+      }
+      
+      const totalBadge = document.getElementById('total-badge');
+      if (totalBadge) totalBadge.innerText = mockInvoices.filter(i => i.status !== "Synced to SAP").length;
+
+      const flagBadge = document.getElementById('flag-badge');
+      const flags = mockInvoices.filter(inv => inv.status !== "Synced to SAP" && (inv.grStatus === 'MISMATCH' || inv.grStatus === 'NO_GR')).length;
+      if (flagBadge) flagBadge.innerText = flags;
+
+      const myTasksBadge = document.getElementById('my-tasks-badge');
+      if (myTasksBadge && currentUser) {
+        myTasksBadge.innerText = mockInvoices.filter(i => i.status !== "Synced to SAP" && i.owner === currentUser.name).length;
+      }
+
+      if (list.length === 0) {
+        listContainer.innerHTML = `
+          <div class="col-span-full text-center py-12 bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
+            <i data-lucide="mail-open" class="w-12 h-12 text-slate-350 mx-auto mb-3 animate-pulse"></i>
+            <p class="text-sm font-bold text-slate-700">No Invoices Found</p>
+            <p class="text-xs text-slate-450 mt-1">There are no inbound emails matching the current queue filters.</p>
+          </div>
+        `;
+        return;
+      }
+
+      list.forEach(inv => {
+        const isLockedByOther = inv.owner !== "Unassigned" && inv.owner !== currentUser.name;
+        
+        let lockIndicator = '';
+        if (isLockedByOther) {
+          lockIndicator = `<span class="bg-red-50 text-red-700 text-[9px] px-1.5 py-0.5 rounded flex items-center gap-1 font-bold border border-red-100"><i data-lucide="lock" class="w-2.5 h-2.5 text-red-500"></i>LOCKED</span>`;
+        } else if (inv.owner !== "Unassigned") {
+          lockIndicator = `<span class="bg-blue-50 text-blue-700 text-[9px] px-1.5 py-0.5 rounded flex items-center gap-1 font-bold border border-blue-100"><i data-lucide="user-check" class="w-2.5 h-2.5 text-blue-600"></i>MINE</span>`;
+        }
+
+        let urgentBadge = inv.urgent 
+          ? `<span class="bg-red-100 text-red-800 font-bold px-1.5 py-0.5 rounded text-[9px] flex items-center gap-1 font-mono border border-red-200"><i data-lucide="zap" class="w-2.5 h-2.5"></i>SAME DAY</span>`
+          : '';
+
+        let grDot = 'bg-gray-400';
+        if (inv.grStatus === 'MATCHED') grDot = 'bg-emerald-500';
+        if (inv.grStatus === 'MISMATCH') grDot = 'bg-amber-500';
+        if (inv.grStatus === 'NO_GR') grDot = 'bg-red-500';
+
+        if (currentView === 'active') {
+          let claimButtonArea = '';
+          if (inv.owner === 'Unassigned') {
+            claimButtonArea = `
+              <div class="pt-3 border-t border-slate-100 mt-2">
+                <button onclick="claimInvoiceDirectly('${inv.id}')" class="w-full bg-[#005A9C] hover:bg-[#004e87] text-white text-xs font-bold py-2.5 px-4 rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm">
+                  <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Claim Task
+                </button>
+              </div>
+            `;
+          }
+
+          listContainer.innerHTML += `
+            <div class="p-5 rounded-2xl border border-slate-200 bg-white hover:border-slate-255 hover:shadow-md flex flex-col justify-between gap-4 cursor-default">
+              <div class="space-y-2">
+                <div class="flex items-start justify-between">
+                  <span class="text-[11px] text-[#005A9C] font-extrabold uppercase tracking-wider truncate max-w-[190px]">${inv.vendor}</span>
+                  <span class="text-[10px] text-slate-500 font-mono font-semibold">${inv.received.split(' ')[1]} ${inv.received.split(' ')[2]}</span>
+                </div>
+                <p class="text-xs font-bold text-slate-900 line-clamp-2 leading-relaxed h-8">${inv.subject}</p>
+              </div>
+              
+              <div class="space-y-3.5">
+                <div class="flex items-center justify-between text-xs pt-2 border-t border-slate-100">
+                  <span class="font-mono text-slate-950 font-black text-sm">${inv.amount}</span>
+                  <span class="font-mono text-[10px]"><strong class="text-[#005A9C]">PO:</strong> <span class="text-slate-900 font-bold">${inv.poNumber.split('-')[1]}</span></span>
+                </div>
+
+                <div class="flex items-center justify-between border-t border-slate-100 pt-2.5">
+                  <div class="flex items-center gap-2">
+                    <span class="h-2 w-2 rounded-full ${grDot}"></span>
+                    <span class="text-[10px] ${inv.owner === 'Unassigned' ? 'text-amber-600 font-bold' : 'text-slate-900 font-semibold'} flex items-center gap-1 truncate max-w-[130px]">
+                      <i data-lucide="user" class="w-2.5 h-2.5 shrink-0 text-[#005A9C]"></i>
+                      ${inv.owner}
+                    </span>
+                  </div>
+                  <div class="flex gap-1.5">
+                    ${lockIndicator}
+                    ${urgentBadge}
+                  </div>
+                </div>
+                ${claimButtonArea}
+              </div>
+            </div>
+          `;
+        } else {
+          // tasks or flags view
+          const isSelected = inv.id === selectedInvoiceId;
+          let selectionClass = isSelected
+            ? 'bg-white border-2 border-blue-600 premium-shadow'
+            : 'bg-white border-slate-200 hover:border-slate-350 hover:shadow-md';
+
+          listContainer.innerHTML += `
+            <div class="p-5 rounded-2xl border transition cursor-pointer flex flex-col justify-between gap-4 ${selectionClass} ${inv.urgent && !isSelected ? 'pulse-urgent' : ''}" onclick="selectInvoice('${inv.id}')">
+              <div class="space-y-2">
+                <div class="flex items-start justify-between">
+                  <span class="text-[11px] text-[#005A9C] font-extrabold uppercase tracking-wider truncate max-w-[190px]">${inv.vendor}</span>
+                  <span class="text-[10px] text-slate-500 font-mono font-semibold">${inv.received.split(' ')[1]} ${inv.received.split(' ')[2]}</span>
+                </div>
+                <p class="text-xs font-bold text-slate-900 line-clamp-2 leading-relaxed h-8">${inv.subject}</p>
+              </div>
+              
+              <div class="space-y-3.5">
+                <div class="flex items-center justify-between text-xs pt-2 border-t border-slate-100">
+                  <span class="font-mono text-slate-950 font-black text-sm">${inv.amount}</span>
+                  <span class="font-mono text-[10px]"><strong class="text-[#005A9C]">PO:</strong> <span class="text-slate-900 font-bold">${inv.poNumber.split('-')[1]}</span></span>
+                </div>
+
+                <div class="flex items-center justify-between border-t border-slate-100 pt-2.5">
+                  <div class="flex items-center gap-2">
+                    <span class="h-2 w-2 rounded-full ${grDot}"></span>
+                    <span class="text-[10px] ${inv.owner === 'Unassigned' ? 'text-amber-600 font-bold' : 'text-slate-900 font-semibold'} flex items-center gap-1 truncate max-w-[130px]">
+                      <i data-lucide="user" class="w-2.5 h-2.5 shrink-0 text-[#005A9C]"></i>
+                      ${inv.owner}
+                    </span>
+                  </div>
+                  <div class="flex gap-1.5">
+                    ${lockIndicator}
+                    ${urgentBadge}
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+      });
+
+      lucide.createIcons();
+    }
+
+    function claimInvoiceDirectly(id) {
+      const inv = mockInvoices.find(item => item.id === id);
+      if (inv && currentUser) {
+        inv.owner = currentUser.name;
+        mockLogs.unshift({
+          timestamp: new Date().toLocaleString(),
+          event: "Owner Claimed",
+          actor: currentUser.name,
+          details: `Invoice ID ${inv.id} claimed directly from Active Queue.`
+        });
+        showToast("Task claimed successfully! It is now in your 'My Tasks' queue.", "success");
+        renderQueue();
+      }
+    }
+
+    // 4. FILTER QUEUE
+    function setQueueFilter(filterVal) {
+      currentFilter = filterVal;
+      
+      const allBtn = document.getElementById('filter-btn-all');
+      const urgentBtn = document.getElementById('filter-btn-urgent');
+      
+      if (!allBtn || !urgentBtn) return;
+
+      if (filterVal === 'all') {
+        allBtn.className = "px-3.5 py-1.5 rounded-lg bg-white text-[#005A9C] border border-white text-xs font-bold uppercase transition shadow-sm";
+        urgentBtn.className = "px-3.5 py-1.5 rounded-lg bg-transparent text-white border border-white/20 hover:bg-white/10 text-xs font-bold uppercase transition flex items-center gap-1 shadow-sm";
+      } else {
+        allBtn.className = "px-3.5 py-1.5 rounded-lg bg-transparent text-white border border-white/20 hover:bg-white/10 text-xs font-bold uppercase transition shadow-sm";
+        urgentBtn.className = "px-3.5 py-1.5 rounded-lg bg-red-600 text-white border border-red-500/10 text-xs font-bold uppercase transition flex items-center gap-1 shadow-sm";
+      }
+
+      renderQueue();
+    }
+
+    function filterQueueBySearch() {
+      const search = document.getElementById('search-input');
+      if (search) searchQuery = search.value;
+      renderQueue();
+    }
+
+    function openInvoiceDetailsView() {
+      const listContainer = document.getElementById('queue-list-container');
+      const detailsContainer = document.getElementById('queue-details-container');
+      if (listContainer && detailsContainer) {
+        listContainer.classList.add('hidden');
+        detailsContainer.classList.remove('hidden');
+        detailsContainer.scrollTop = 0;
+        lucide.createIcons();
+      }
+    }
+
+    function goBackToQueueList() {
+      const listContainer = document.getElementById('queue-list-container');
+      const detailsContainer = document.getElementById('queue-details-container');
+      if (listContainer && detailsContainer) {
+        detailsContainer.classList.add('hidden');
+        listContainer.classList.remove('hidden');
+        selectedInvoiceId = null;
+        renderQueue();
+      }
+    }
+
+    // Helper to open/close details modal (Redirected to inline view)
+    function openInvoiceModal() {
+      openInvoiceDetailsView();
+    }
+
+    function closeInvoiceModal() {
+      goBackToQueueList();
+    }
+
+    // 5. SELECTED INVOICE DETAILS DISPLAY
+    function selectInvoice(id) {
+      selectedInvoiceId = id;
+      const inv = mockInvoices.find(item => item.id === id);
+      if (!inv) return;
+
+      const vendor = document.getElementById('selected-vendor');
+      const subject = document.getElementById('selected-subject');
+      const received = document.getElementById('selected-received');
+      const confidence = document.getElementById('selected-confidence');
+      
+      if (vendor) vendor.innerText = inv.vendor;
+      if (subject) subject.innerText = inv.subject;
+      if (received) received.innerText = inv.received;
+      if (confidence) confidence.innerText = inv.confidence;
+      
+      const filename = document.getElementById('selected-filename');
+      const filesize = document.getElementById('selected-filesize');
+      if (filename) filename.innerText = inv.filename;
+      if (filesize) filesize.innerText = inv.filesize;
+
+      const emailFrom = document.getElementById('email-from');
+      const emailBody = document.getElementById('email-body');
+      if (emailFrom) emailFrom.innerText = inv.emailFrom;
+      if (emailBody) emailBody.innerHTML = inv.emailBody.replace(/\n/g, '<br>');
+
+      const banner = document.getElementById('urgent-banner');
+      if (banner) {
+        if (inv.urgent) {
+          banner.classList.remove('hidden');
+        } else {
+          banner.classList.add('hidden');
+        }
+      }
+
+      const loader = document.getElementById('processing-loader');
+      if (loader) loader.classList.add('hidden');
+
+      renderLockControlCard(inv);
+      renderAIFieldsContainer(inv); 
+      renderSAPMatchingPanel(inv);
+      renderQueue();
+
+      openInvoiceModal();
+    }
+
+    function renderAIFieldsContainer(inv) {
+      const container = document.getElementById('ai-fields-container');
+      if (!container) return;
+
+      const isMyInvoice = inv.owner === currentUser.name;
+
+      if (isMyInvoice) {
+        container.innerHTML = `
+          <div class="bg-white p-3 rounded-xl border border-blue-200 premium-shadow space-y-1.5">
+            <label class="text-[9px] text-[#005A9C] uppercase font-bold tracking-wider block">✏️ Extracted PO Number</label>
+            <input type="text" value="${inv.poNumber}" oninput="updateInvoiceField('poNumber', this.value)" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 text-xs text-slate-900 font-bold font-mono focus:outline-none focus:border-blue-500 focus:bg-white">
+          </div>
+          <div class="bg-white p-3 rounded-xl border border-blue-200 premium-shadow space-y-1.5">
+            <label class="text-[9px] text-[#005A9C] uppercase font-bold tracking-wider block">✏️ Invoice Number</label>
+            <input type="text" value="${inv.invoiceNumber}" oninput="updateInvoiceField('invoiceNumber', this.value)" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 text-xs text-slate-900 font-bold font-mono focus:outline-none focus:border-blue-500 focus:bg-white">
+          </div>
+          <div class="bg-white p-3 rounded-xl border border-blue-200 premium-shadow space-y-1.5">
+            <label class="text-[9px] text-[#005A9C] uppercase font-bold tracking-wider block">✏️ Invoice Date</label>
+            <input type="text" value="${inv.invoiceDate}" oninput="updateInvoiceField('invoiceDate', this.value)" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 text-xs text-slate-900 font-bold font-mono focus:outline-none focus:border-blue-500 focus:bg-white">
+          </div>
+          <div class="bg-white p-3 rounded-xl border border-blue-200 premium-shadow space-y-1.5">
+            <label class="text-[9px] text-[#005A9C] uppercase font-bold tracking-wider block">✏️ Total Amount</label>
+            <input type="text" value="${inv.amount}" oninput="updateInvoiceField('amount', this.value)" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 text-xs text-slate-900 font-bold font-mono focus:outline-none focus:border-blue-500 focus:bg-white">
+          </div>
+        `;
+      } else {
+        container.innerHTML = `
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 premium-shadow space-y-1">
+            <label class="text-[9px] text-[#005A9C] uppercase font-bold tracking-wider block">Extracted PO Number</label>
+            <span class="text-xs font-bold text-slate-900 font-mono" id="field-po">${inv.poNumber}</span>
+          </div>
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 premium-shadow space-y-1">
+            <label class="text-[9px] text-[#005A9C] uppercase font-bold tracking-wider block">Invoice Number</label>
+            <span class="text-xs font-bold text-slate-900 font-mono" id="field-inv-num">${inv.invoiceNumber}</span>
+          </div>
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 premium-shadow space-y-1">
+            <label class="text-[9px] text-[#005A9C] uppercase font-bold tracking-wider block">Invoice Date</label>
+            <span class="text-xs font-bold text-slate-900 font-mono" id="field-inv-date">${inv.invoiceDate}</span>
+          </div>
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 premium-shadow space-y-1">
+            <label class="text-[9px] text-[#005A9C] uppercase font-bold tracking-wider block">Total Amount</label>
+            <span class="text-base font-black text-slate-900 font-mono" id="field-amount">${inv.amount}</span>
+          </div>
+        `;
+      }
+    }
+
+    function updateInvoiceField(fieldKey, value) {
+      const inv = mockInvoices.find(item => item.id === selectedInvoiceId);
+      if (inv) {
+        inv[fieldKey] = value;
+        renderQueue();
+      }
+    }
+
+    function renderLockControlCard(inv) {
+      const lockBanner = document.getElementById('lock-banner');
+      if (!lockBanner) return;
+      
+      const isLockedByOther = inv.owner !== "Unassigned" && inv.owner !== currentUser.name;
+
+      if (inv.owner === "Unassigned") {
+        lockBanner.className = "bg-amber-50/50 p-4 rounded-xl border border-amber-200 text-amber-800 flex items-center justify-between";
+        lockBanner.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="h-8 w-8 bg-amber-100 text-amber-850 rounded-full flex items-center justify-center">
+              <i data-lucide="help-circle" class="w-4 h-4 text-amber-600"></i>
+            </div>
+            <div>
+              <p class="text-xs font-bold text-[#005A9C]">Invoice Task is Unassigned</p>
+              <p class="text-[10px] text-slate-900 font-semibold">Claim to enable editing of extracted details and SAP actions.</p>
+            </div>
+          </div>
+          <button onclick="claimInvoice('${inv.id}')" class="bg-[#005A9C] hover:bg-[#004e87] text-white text-2xs font-bold py-1.5 px-3.5 rounded-lg transition flex items-center gap-1.5 shadow-sm">
+            <i data-lucide="user-check" class="w-3.5 h-3.5"></i> Claim Ownership
+          </button>
+        `;
+      } else if (isLockedByOther) {
+        lockBanner.className = "bg-red-50/50 p-4 rounded-xl border border-red-200 text-red-850 flex items-center justify-between animate-pulse";
+        lockBanner.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="h-8 w-8 bg-red-100 text-red-650 rounded-full flex items-center justify-center">
+              <i data-lucide="lock" class="w-4 h-4 text-red-600"></i>
+            </div>
+            <div>
+              <p class="text-xs font-bold text-red-700">🔒 Locked by ${inv.owner}</p>
+              <p class="text-[10px] text-slate-900 font-semibold">Locked to prevent duplicate actions. Read-only view.</p>
+            </div>
+          </div>
+          <div class="text-[10px] text-red-600 font-bold uppercase tracking-wider font-mono">Protected</div>
+        `;
+      } else {
+        const initials = currentUser.initials;
+        const color = initials === 'JD' ? 'bg-blue-600' : 'bg-purple-600';
+        lockBanner.className = "bg-blue-50/50 p-4 rounded-xl border border-blue-200 text-blue-800 flex items-center justify-between";
+        lockBanner.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="h-8 w-8 ${color} rounded-full flex items-center justify-center font-bold text-xs text-white">${initials}</div>
+            <div>
+              <p class="text-xs font-bold text-[#005A9C]">Assigned to You</p>
+              <p class="text-[10px] text-slate-900 font-semibold">Lock active. You can now edit extraction fields below.</p>
+            </div>
+          </div>
+          <button onclick="unclaimInvoice('${inv.id}')" class="bg-white hover:bg-slate-50 text-slate-700 text-2xs font-semibold py-1.5 px-3.5 rounded-lg transition flex items-center gap-1.5 border border-slate-200 shadow-sm">
+            <i data-lucide="user-minus" class="w-3.5 h-3.5 text-slate-400"></i> Unassign Task
+          </button>
+        `;
+      }
+      lucide.createIcons();
+    }
+
+    function claimInvoice(id) {
+      const inv = mockInvoices.find(item => item.id === id);
+      if (inv) {
+        inv.owner = currentUser.name;
+        mockLogs.unshift({
+          timestamp: new Date().toLocaleString(),
+          event: "Owner Claimed",
+          actor: currentUser.name,
+          details: `Invoice ID ${inv.id} claimed from queue.`
+        });
+        showToast("You have claimed ownership. Fields are now editable.", "success");
+        selectInvoice(id);
+      }
+    }
+
+    function unclaimInvoice(id) {
+      const inv = mockInvoices.find(item => item.id === id);
+      if (inv) {
+        const prevOwner = inv.owner;
+        inv.owner = "Unassigned";
+        mockLogs.unshift({
+          timestamp: new Date().toLocaleString(),
+          event: "Owner Unassigned",
+          actor: currentUser.name,
+          details: `Invoice ID ${inv.id} released by ${prevOwner}.`
+        });
+        showToast("Invoice unassigned.", "info");
+        selectInvoice(id);
+      }
+    }
+
+    function renderSAPMatchingPanel(inv) {
+      const valPanel = document.getElementById('validation-panel');
+      const actionControls = document.getElementById('btn-group-wrapper');
+      if (!valPanel || !actionControls) return;
+      
+      const isLockedByOther = inv.owner !== "Unassigned" && inv.owner !== currentUser.name;
+
+      let grClass = '';
+      let grBadge = '';
+      let grDetailText = inv.grDetails;
+      
+      if (inv.grStatus === 'MATCHED') {
+        grClass = 'border-emerald-200 bg-emerald-50';
+        grBadge = `<div class="flex items-center gap-2 text-emerald-800 font-bold text-xs"><i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i>SAP Goods Receipt Verified</div>`;
+      } else if (inv.grStatus === 'MISMATCH') {
+        grClass = 'border-amber-200 bg-amber-50';
+        grBadge = `<div class="flex items-center gap-2 text-amber-850 font-bold text-xs"><i data-lucide="alert-circle" class="w-4 h-4 text-amber-600"></i>GR Amount Mismatch Alert</div>`;
+      } else { 
+        grClass = 'border-red-200 bg-red-50';
+        grBadge = `<div class="flex items-center gap-2 text-red-800 font-bold text-xs"><i data-lucide="x-circle" class="w-4 h-4 text-red-605"></i>No Goods Receipt Found</div>`;
+      }
+
+      let refreshButtonHTML = '';
+      if (inv.grStatus === 'NO_GR' || inv.grStatus === 'MISMATCH') {
+        const disabledAttr = isLockedByOther ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : '';
+        refreshButtonHTML = `
+          <button onclick="refreshSAPStatus('${inv.id}')" ${disabledAttr} class="mt-2 text-2xs bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 font-bold py-1.5 px-3 rounded-lg transition flex items-center gap-1.5 self-start shadow-sm">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-blue-600"></i> 
+            <span>Query SAP for Goods Receipt (Refresh)</span>
+          </button>
+        `;
+      }
+
+      valPanel.className = `p-4 rounded-xl border flex flex-col gap-2.5 ${grClass}`;
+      valPanel.innerHTML = `
+        <div class="flex justify-between items-center">
+          ${grBadge}
+          <span class="text-[10px] text-[#005A9C] font-extrabold font-mono">SAP SYS: PRD_200</span>
+        </div>
+        <p class="text-2xs leading-relaxed font-mono font-bold text-slate-900">${grDetailText}</p>
+        ${refreshButtonHTML}
+      `;
+
+      if (isLockedByOther) {
+        actionControls.innerHTML = `
+          <div class="bg-red-50 rounded-xl p-3 border border-red-100 text-center flex-1">
+            <p class="text-2xs text-red-800 font-bold flex items-center justify-center gap-1.5"><i data-lucide="lock" class="w-3.5 h-3.5 text-red-600"></i> Locked by ${inv.owner}</p>
+          </div>
+          <button disabled class="flex-1 bg-slate-100 text-slate-400 font-bold py-2.5 px-4 rounded-lg text-xs cursor-not-allowed flex items-center justify-center gap-2"><i data-lucide="shield-alert" class="w-4 h-4"></i> Approve & Sync to SAP Workflow</button>
+        `;
+      } else if (inv.owner === "Unassigned") {
+        actionControls.innerHTML = `
+          <div class="bg-amber-50 rounded-xl p-3 border border-amber-100 flex items-center gap-2 flex-1">
+            <p class="text-2xs text-slate-900 font-semibold"><strong class="text-[#005A9C]">Task Unassigned:</strong> Claim task to enable actions.</p>
+          </div>
+          <button onclick="claimInvoice('${inv.id}')" class="bg-white hover:bg-slate-100 text-[#005A9C] font-bold py-2.5 px-6 rounded-lg text-xs transition flex items-center justify-center gap-2 shadow-md"><i data-lucide="user-plus" class="w-4 h-4 text-[#005A9C]"></i> Claim & Enable Controls</button>
+        `;
+      } else {
+        const isMatched = inv.grStatus === "MATCHED";
+        let approveButton = isMatched
+          ? `<button onclick="approveInvoice('${inv.id}')" class="flex-1 bg-white hover:bg-slate-100 text-[#005A9C] font-bold py-2.5 px-4 rounded-lg text-xs transition flex items-center justify-center gap-2 shadow-md"><i data-lucide="check-circle" class="w-4 h-4 text-[#005A9C]"></i> Approve & Sync to SAP Workflow</button>`
+          : `<button disabled class="flex-1 bg-slate-100 text-slate-400 border border-slate-200 font-semibold py-2.5 px-4 rounded-lg text-xs cursor-not-allowed flex items-center justify-center gap-2"><i data-lucide="shield-alert" class="w-4 h-4 text-slate-400"></i> Approve & Sync (Block: GR Mismatch)</button>`;
+
+        actionControls.innerHTML = `
+          ${approveButton}
+          <button onclick="flagInvoice('${inv.id}')" class="flex-1 bg-transparent hover:bg-white/10 border border-white/30 text-white font-bold py-2 px-4 rounded-lg text-xs transition flex items-center justify-center gap-2 shadow-sm">
+            <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400"></i> Flag Exception / Escalation
+          </button>
+        `;
+      }
+      lucide.createIcons();
+    }
+
+    function refreshSAPStatus(id) {
+      const inv = mockInvoices.find(item => item.id === id);
+      if (!inv) return;
+
+      const valPanel = document.getElementById('validation-panel');
+      if (!valPanel) return;
+
+      valPanel.className = `p-4 rounded-xl border border-blue-200 bg-blue-50 text-blue-800`;
+      valPanel.innerHTML = `
+        <div class="flex items-center gap-3 py-1">
+          <svg class="animate-spin h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+          <div class="text-xs font-bold font-sans text-slate-800">Querying SAP System PRD_200 (RFC check)...</div>
+        </div>
+      `;
+
+      setTimeout(() => {
+        inv.grStatus = "MATCHED";
+        if (id === "sga-102") {
+          inv.grDetails = "Goods Receipt GR-800312 created at 12:05 PM by HQ Site Manager (15 Office Supply Packs). Matches invoice amount of $850.50.";
+        } else if (id === "sga-101") {
+          inv.grDetails = "Purchase Order Adjustment posted. Goods Receipt GR-800299 updated. Invoice matches adjusted amount of $18,250.00.";
+        }
+
+        mockLogs.unshift({
+          timestamp: new Date().toLocaleString(),
+          event: "SAP DB Sync Update",
+          actor: "System (RFC)",
+          details: `Manual request matched Goods Receipt in SAP for PO associated with invoice ID ${inv.id}.`
+        });
+
+        showToast("SAP DB Sync: Matching Goods Receipt found and updated!", "success");
+        selectInvoice(id);
+      }, 1500);
+    }
+
+    function approveInvoice(id) {
+      const inv = mockInvoices.find(item => item.id === id);
+      if (!inv) return;
+
+      const wrapper = document.getElementById('btn-group-wrapper');
+      const loader = document.getElementById('processing-loader');
+      
+      if (wrapper) wrapper.innerHTML = '';
+      if (loader) loader.classList.remove('hidden');
+
+      const chk1 = document.getElementById('chk-status-1');
+      const chk2 = document.getElementById('chk-status-2');
+      const chk3 = document.getElementById('chk-status-3');
+
+      chk1.innerText = "VERIFYING"; chk1.className = "text-amber-600 font-bold";
+
+      setTimeout(() => {
+        chk1.innerText = "CONFIRMED"; chk1.className = "text-emerald-600 font-bold";
+        chk2.innerText = "CHECKING"; chk2.className = "text-amber-600 font-bold";
+      }, 800);
+
+      setTimeout(() => {
+        chk2.innerText = "MATCHED"; chk2.className = "text-emerald-600 font-bold";
+        chk3.innerText = "UPLOADING"; chk3.className = "text-amber-600 font-bold";
+      }, 1600);
+
+      setTimeout(() => {
+        chk3.innerText = "INGESTED"; chk3.className = "text-emerald-600 font-bold";
+        
+        inv.status = "Synced to SAP";
+        const docId = `SGA-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
+        inv.sapDocId = docId;
+
+        mockLogs.unshift({
+          timestamp: new Date().toLocaleString(),
+          event: "SAP Ingestion Sync",
+          actor: currentUser.name,
+          details: `Approved SGA Invoice ID ${inv.id}. SAP Workflow Doc ID: ${docId} created.`
+        });
+
+        showToast("Sync Complete! Ingested to SAP Workflow.", "success");
+        closeInvoiceModal();
+        switchView('active');
+      }, 2500);
+    }
+
+    function flagInvoice(id) {
+      const inv = mockInvoices.find(item => item.id === id);
+      if (!inv) return;
+      inv.status = "Flagged Exception";
+      mockLogs.unshift({
+        timestamp: new Date().toLocaleString(),
+        event: "Invoice Flagged",
+        actor: currentUser.name,
+        details: `SGA Invoice ID ${inv.id} flagged for escalation.`
+      });
+      showToast("Invoice flagged and moved to AP exception review folder.", "warning");
+      selectInvoice(inv.id);
+    }
+
+    // 6. TABLES RENDERING
+    function renderCompletedTable() {
+      const tbody = document.getElementById('completed-table-body');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      
+      const completed = mockInvoices.filter(i => i.status === "Synced to SAP");
+
+      completed.forEach(inv => {
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-50 border-b border-slate-100 transition text-slate-700">
+            <td class="p-4 text-emerald-600 font-bold">${inv.sapDocId || 'SGA-2026-881204'}</td>
+            <td class="p-4 text-slate-800 font-sans text-xs font-bold">${inv.vendor}</td>
+            <td class="p-4">${inv.invoiceNumber}</td>
+            <td class="p-4">${inv.poNumber}</td>
+            <td class="p-4 text-slate-900 font-bold">${inv.amount}</td>
+            <td class="p-4 font-sans text-2xs text-slate-500">${inv.received}</td>
+            <td class="p-4 text-slate-600 font-sans text-xs flex items-center gap-1.5"><i data-lucide="user" class="w-3 h-3 text-blue-600"></i> ${inv.owner}</td>
+            <td class="p-4 text-center"><span class="bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 rounded text-[10px] font-bold font-sans uppercase">Synced</span></td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML += `
+        <tr class="hover:bg-slate-50 border-b border-slate-100 transition text-slate-700 opacity-75">
+          <td class="p-4 text-emerald-600 font-bold">SGA-2026-102914</td>
+          <td class="p-4 text-slate-800 font-sans text-xs font-bold">Office Depot Business Solutions</td>
+          <td class="p-4">OD-881001</td>
+          <td class="p-4">PO-450097721</td>
+          <td class="p-4 text-slate-900 font-bold">$410.20</td>
+          <td class="p-4 font-sans text-2xs text-slate-500">2026-05-24 11:15 AM</td>
+          <td class="p-4 text-slate-600 font-sans text-xs flex items-center gap-1.5"><i data-lucide="user" class="w-3 h-3 text-blue-600"></i> John Doe</td>
+          <td class="p-4 text-center"><span class="bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 rounded text-[10px] font-bold font-sans uppercase">Synced</span></td>
+        </tr>
+        <tr class="hover:bg-slate-50 border-b border-slate-100 transition text-slate-700 opacity-75">
+          <td class="p-4 text-emerald-600 font-bold">SGA-2026-081290</td>
+          <td class="p-4 text-slate-800 font-sans text-xs font-bold">Cummins Engine Service</td>
+          <td class="p-4">CUM-9912</td>
+          <td class="p-4">PO-450098004</td>
+          <td class="p-4 text-slate-900 font-bold">$1,450.00</td>
+          <td class="p-4 font-sans text-2xs text-slate-500">2026-05-23 04:45 PM</td>
+          <td class="p-4 text-slate-600 font-sans text-xs flex items-center gap-1.5"><i data-lucide="user" class="w-3 h-3 text-blue-600"></i> Alice Smith</td>
+          <td class="p-4 text-center"><span class="bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 rounded text-[10px] font-bold font-sans uppercase">Synced</span></td>
+        </tr>
+      `;
+      lucide.createIcons();
+    }
+
+    function renderAuditTable() {
+      const tbody = document.getElementById('audit-table-body');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      
+      mockLogs.forEach(log => {
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-50 border-b border-slate-100 transition text-slate-700">
+            <td class="p-4 text-slate-500 text-2xs font-bold">${log.timestamp}</td>
+            <td class="p-4 font-bold text-xs"><span class="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-[#0A2342] font-sans font-bold text-[10px] uppercase">${log.event}</span></td>
+            <td class="p-4 text-slate-800 text-xs font-bold font-sans">${log.actor}</td>
+            <td class="p-4 text-slate-600 font-sans text-xs font-semibold">${log.details}</td>
+          </tr>
+        `;
+      });
+    }
+
+    function updateConfigSlider() {
+      const slider = document.getElementById('conf-slider');
+      const display = document.getElementById('conf-val');
+      if (slider && display) {
+        aiConfig.confidenceThreshold = slider.value;
+        display.innerText = slider.value + '%';
+      }
+    }
+
+    function saveAIConfig() {
+      const keywords = document.getElementById('config-keywords').value;
+      const sync = document.getElementById('config-sync').value;
+      const archive = document.getElementById('config-archive').value;
+
+      aiConfig.urgentKeywords = keywords.split(',').map(s => s.trim());
+      aiConfig.syncInterval = sync;
+      aiConfig.archiveFolder = archive;
+
+      mockLogs.unshift({
+        timestamp: new Date().toLocaleString(),
+        event: "AI Config Edited",
+        actor: currentUser.name,
+        details: `Confidence limit updated to ${aiConfig.confidenceThreshold}%. Sync set to ${sync}m.`
+      });
+
+      showToast("AI Configurations successfully saved and deployed.", "success");
+      switchView('active');
+    }
+
+    // 7. SYSTEM TOASTS
+    function showToast(message, type = "success") {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `mb-3 p-4 rounded-xl shadow-lg border flex items-center gap-3 transition-all duration-300 transform translate-y-4 opacity-0 pointer-events-auto max-w-sm bg-white border-slate-200 z-50`;
+      
+      let icon = '';
+      if (type === 'success') {
+        icon = `<i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600 shrink-0"></i>`;
+      } else if (type === 'warning') {
+        icon = `<i data-lucide="alert-triangle" class="w-5 h-5 text-amber-500 shrink-0"></i>`;
+      } else if (type === 'error') {
+        icon = `<i data-lucide="x-octagon" class="w-5 h-5 text-red-500 shrink-0"></i>`;
+      } else {
+        icon = `<i data-lucide="info" class="w-5 h-5 text-blue-600 shrink-0"></i>`;
+      }
+
+      toast.innerHTML = `
+        ${icon}
+        <div class="text-xs font-semibold text-slate-700">${message}</div>
+      `;
+
+      container.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.classList.remove('translate-y-4', 'opacity-0');
+      }, 50);
+
+      setTimeout(() => {
+        toast.classList.add('translate-y-2', 'opacity-0');
+        setTimeout(() => {
+          toast.remove();
+        }, 300);
+      }, 5000);
+
+      lucide.createIcons();
+    }
+
+    // Initialize icons on page load
+    document.addEventListener("DOMContentLoaded", () => {
+      lucide.createIcons();
+    });
+  </script>
+  <!-- Details modal removed: now rendered inline in workspace-layout -->
+</body>
+</html>
